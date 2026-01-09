@@ -1,0 +1,15 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 스크롤 방지 */
+  background-color: #1a1a1a;
+  touch-action: none; /* 모바일에서 더블탭 확대 방지 */
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: block; /* flex 제거 (Phaser가 알아서 함) */
+}
