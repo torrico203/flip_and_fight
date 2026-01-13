@@ -6,6 +6,7 @@ import BattleScene from './scenes/BattleScene';
 import PachinkoScene from './scenes/PachinkoScene';
 import SlotMachineScene from './scenes/SlotMachineScene';
 import PineappleScene from './scenes/PineappleScene';
+import HammerScene from './scenes/HammerScene';
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -22,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
         default: 'arcade',
         arcade: { debug: false }
     },
-    scene: [MenuScene, MainScene, BattleScene, PachinkoScene, SlotMachineScene, PineappleScene]
+    scene: [MenuScene, MainScene, BattleScene, PachinkoScene, SlotMachineScene, PineappleScene, HammerScene]
 };
 
 new Phaser.Game(config);

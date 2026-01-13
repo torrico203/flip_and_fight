@@ -62,6 +62,10 @@ export default class MenuScene extends Phaser.Scene {
         this.createSmallButton(centerX + 80, devStartY + 100, '🍍 Pineapple', () => {
             this.runTestEvent('PineappleScene');
         });
+
+        this.createSmallButton(centerX - 80, devStartY + 140, '🔨 Hammer', () => {
+            this.runTestEvent('HammerScene');
+        });
     }
 
     private createButton(x: number, y: number, label: string, callback: () => void) {

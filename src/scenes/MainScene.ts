@@ -5,6 +5,7 @@ import BattleScene from './BattleScene';
 import DataManager from '../managers/DataManager';
 import PachinkoScene from './PachinkoScene';
 import SlotMachineScene from './SlotMachineScene';
+import HammerScene from './HammerScene';
 
 interface GameData { gridSize: number; }
 
@@ -395,6 +396,14 @@ export default class MainScene extends Phaser.Scene {
                 this.scene.launch('PineappleScene', {
                     onComplete: (result: any) => {
                         console.log("파인애플 종료:", result);
+                        this.postMoveCheck();
+                    }
+                });
+                break;
+            case 3:
+                this.scene.launch('HammerScene', {
+                    onComplete: (result: any) => {
+                        console.log("해머 종료:", result);
                         this.postMoveCheck();
                     }
                 });

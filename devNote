@@ -80,8 +80,82 @@ slot, card, 사다리, 추가랜덤성 이벤트 기획 필요....!
 
 pachinko(완) - 더 쫀득하게 재미있게 처리 필요 (하단으로 흘러들어가는 느낌 부족함)
 slot machine(완) - 더 쫀득하게 재미있게 처리 필요 (보상 논의 구체화)
+pineapple(완) - 이미지 교체 필요 && 보상 체계화
+hammer (완) - 더 쫀득하게 재미있게 처리 필요 (이미지 교체 필요 && 보상 논의 구체화)
 
 bm
 - 대각선 이동 가능한 캐릭터
 - 2칸 이동 가능한 캐릭터
 - 펫
+
+1. 기술 스택: Electron (일렉트론)
+웹 게임을 스팀(데스크탑 앱)으로 돌리려면 **"브라우저를 내장한 실행 파일(.exe)"**로 감싸야 합니다.
+
+Toss/Android: 웹뷰(WebView)를 썼다면,
+
+PC/Steam: Electron을 씁니다. (Chromium + Node.js 기반)
+
+장점:
+
+src 폴더에 있는 코드를 단 한 줄도 수정 안 하고 바로 .exe로 뽑을 수 있습니다.
+
+Vite랑 궁합이 아주 좋습니다. (electron-vite 같은 템플릿 존재)
+
+로컬 파일 시스템 접근이 가능해져서 세이브 파일 저장이 용이합니다.
+
+2. 스팀 연동: steamworks.js
+단순히 실행만 되면 스팀 게임이 아닙니다. 도전과제(Achievements), 클라우드 저장, 스팀 오버레이가 붙어야 "진짜 스팀 게임" 취급을 받습니다.
+
+steamworks.js: Node.js 환경(Electron)에서 C++로 된 Steamworks SDK를 자바스크립트로 호출하게 해주는 라이브러리입니다.
+
+사용 예시:
+
+TypeScript
+
+import steamworks from 'steamworks.js';
+
+const client = steamworks.init(480); // 480은 스팀 테스트용 앱ID
+
+// 도전과제 달성 코드
+if (client.achievement.activate('ACH_WIN_PINEAPPLE')) {
+    console.log("도전과제 달성!");
+}
+정말 이게 끝입니다. Toss 결제 연동보다 100배 쉽습니다.
+
+3. 스팀 출시를 위해 보강해야 할 점 (체크리스트)
+지금 만드신 프로토타입에서 스팀용으로 가려면 이 3가지만 신경 쓰시면 됩니다.
+
+① 저장 시스템 (Save System)
+
+지금 DataManager는 메모리에만 저장하죠?
+
+웹에선 localStorage를 쓰지만, 스팀에선 **로컬 파일(JSON)**로 저장해야 안전하고 스팀 클라우드 연동도 가능합니다.
+
+Electron의 fs 모듈을 사용해서 C:/Users/AppData/.../save.json에 쏘면 끝입니다.
+
+② 해상도 및 입력 대응
+
+해상도: 이미 RESIZE 모드로 반응형을 잡아놨으니 OK입니다. (PC 전체 화면 대응 완료)
+
+입력: 지금 마우스 클릭 기반인데, 스팀 유저는 키보드/단축키나 게임패드를 선호합니다.
+
+예: 스페이스바(Spin), ESC(메뉴/취소), 화살표(이동).
+
+이것도 Phaser에 내장된 input.keyboard 쓰면 금방입니다.
+
+③ 스팀 덱(Steam Deck) 호환성
+
+요즘 인디 게임 매출의 30~40%가 스팀 덱에서 나옵니다.
+
+Electron으로 빌드하고 리눅스 지원만 체크하면, 스팀 덱에서도 아주 잘 돌아갑니다.
+
+4. 결론 및 제안
+"기술적으로는 이미 준비된 상태입니다." Toss나 TV 앱 포팅해보셨으면, Electron 껍데기 씌우는 건 주말 하루면 끝납니다.
+
+지금은 게임의 **재미(Core Loop)**를 완성하는 데 집중하시고, 나중에 "자 이제 스팀 빌드 뽑아볼까?" 할 때 말씀하시면:
+
+현재 프로젝트에 Electron 붙이기
+
+steamworks.js 연동해서 도전과제 뚫기
+
+세이브 파일 로컬 저장 로직 (fs 모듈 사용)
