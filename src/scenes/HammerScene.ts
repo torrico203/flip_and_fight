@@ -80,12 +80,16 @@ export default class HammerScene extends Phaser.Scene {
         // 3. 시작 버튼
         this.startBtn = this.add.text(centerX, centerY, 'TAP TO START', {
             fontSize: '32px', color: '#00ff00', backgroundColor: '#000', padding: { x: 10, y: 10 }
-        })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => this.startGame());
+        }).setOrigin(0.5);
 
-        this.input.on('pointerdown', () => this.handleInput());
+
+        this.input.on('pointerdown', () => {
+            if (!this.isPlaying) {
+                this.startGame();
+            } else {
+                this.handleInput();
+            }
+        });
     }
 
     private createTower(x: number) {
@@ -134,9 +138,9 @@ export default class HammerScene extends Phaser.Scene {
         this.tween = this.tweens.add({
             targets: this.hammer,
             y: topY,
-            duration: 1500,
+            duration: 1800, //동작 시간
             yoyo: true,
-            ease: 'Quad.easeInOut',
+            ease: 'Quad.easeInOut', // 해머 움직임 스타일
             onComplete: () => this.finishGame()
         });
     }

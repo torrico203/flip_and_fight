@@ -75,9 +75,9 @@ export default class MainScene extends Phaser.Scene {
                 const posY = y * (this.tileSize + this.tileGap);
                 
                 // 랜덤 타입
-                const types = ['M', 'I', 'T', 'E', 'EVT']; // 몬스터, 아이템, 트랩, 타임, 이벤트, 빈칸
+                const types = ['M', 'I', 'T', 'E', 'EVT', 'SHOP_G']; // 몬스터, 아이템, 트랩, 타임, 이벤트, 빈칸, 골드상점(sg)
                 const randomType = types[Math.floor(Math.random() * types.length)];
-
+                if (Math.random() < 0.3) types.push('SHOP_D'); // 악마상점(sd)
                 const tile = new Tile(this, posX, posY, randomType);
                 
                 // 클릭 이벤트: 인접한 타일만 이동 가능
@@ -168,6 +168,14 @@ export default class MainScene extends Phaser.Scene {
         }
         else if (pTile.tileType === 'EVT') {
             this.time.delayedCall(500, () => this.triggerRandomEvent());
+        }
+        // @ts-ignore
+        else if (pTile.tileType === 'SHOP_G') {
+            this.time.delayedCall(500, () => this.openShop('GOLD'));
+        }
+        // @ts-ignore
+        else if (pTile.tileType === 'SHOP_D') {
+            this.time.delayedCall(500, () => this.openShop('DEVIL'));
         }
         else {
              // 일반 아이템/함정 처리는 여기서 즉시 해도 됨
@@ -367,6 +375,17 @@ export default class MainScene extends Phaser.Scene {
         // 3초 뒤 메뉴로 이동
         this.time.delayedCall(3000, () => {
             this.scene.start('MenuScene');
+        });
+    }
+
+    // [신규] 상점 오픈 헬퍼
+    private openShop(type: 'GOLD' | 'DEVIL') {
+        this.scene.launch('ShopScene', {
+            type: type,
+            onComplete: () => {
+                // 상점 볼일 다 보고 나오면 턴 종료 체크
+                this.postMoveCheck();
+            }
         });
     }
 

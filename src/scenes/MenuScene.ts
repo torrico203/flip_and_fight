@@ -66,6 +66,14 @@ export default class MenuScene extends Phaser.Scene {
         this.createSmallButton(centerX - 80, devStartY + 140, '🔨 Hammer', () => {
             this.runTestEvent('HammerScene');
         });
+
+        this.createSmallButton(centerX - 80, devStartY + 180, '💰 Gold Shop', () => {
+             this.runTestShop('GOLD');
+        });
+
+        this.createSmallButton(centerX + 80, devStartY + 180, '👿 Devil Shop', () => {
+             this.runTestShop('DEVIL');
+        });
     }
 
     private createButton(x: number, y: number, label: string, callback: () => void) {
@@ -130,6 +138,26 @@ export default class MenuScene extends Phaser.Scene {
             playerAtk: 5,
             onComplete: (result: any) => {
                 console.log("Battle Test Result:", result);
+                this.scene.start('MenuScene');
+            }
+        });
+    }
+
+    // [신규] 상점 테스트용 헬퍼 함수
+    private runTestShop(type: 'GOLD' | 'DEVIL') {
+        console.log(`🧪 Testing Shop: ${type}`);
+        
+        // 1. 가짜 세션 생성
+        DataManager.startNewGame(0, 0);
+        
+        // 2. 쇼핑 좀 시원하게 하시라고 지갑 두둑히 채워드립니다.
+        DataManager.meta.gold = 500;        // 황금 상점용: 500골드
+        DataManager.getSession().currentHp = 30; // 악마 상점용: 체력 30
+        
+        this.scene.start('ShopScene', {
+            type: type,
+            onComplete: () => {
+                console.log("상점 이용 종료. 메뉴로 복귀.");
                 this.scene.start('MenuScene');
             }
         });
