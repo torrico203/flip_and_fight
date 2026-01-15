@@ -19,11 +19,13 @@ export default class MenuScene extends Phaser.Scene {
         
         // Tutorial: 기존 -50 -> -100
         this.createButton(centerX, centerY - 100, 'Tutorial (3x3)', () => {
+            DataManager.startNewGame(0,2,3);
             this.scene.start('MainScene', { gridSize: 3 });
         });
 
         // Standard: 기존 +30 -> -20 (화면 중앙보다 살짝 위)
         this.createButton(centerX, centerY - 20, 'Standard (5x5)', () => {
+            DataManager.startNewGame(0,4,2);
             this.scene.start('MainScene', { gridSize: 5 });
         });
         

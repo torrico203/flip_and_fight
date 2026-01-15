@@ -45,8 +45,13 @@ export default class Tile extends Phaser.GameObjects.Container {
             scaleX: 0,       // 가로로 납작하게
             duration: 150,
             onComplete: () => {
+                if (!this.scene || !this.active) {
+                    return;
+                }
                 // 납작해졌을 때 내용물 변경
                 this.updateContent();
+
+                if(!this.scene) return;
                 
                 // 다시 펴기
                 this.scene.tweens.add({
@@ -59,6 +64,10 @@ export default class Tile extends Phaser.GameObjects.Container {
     }
 
     private updateContent() {
+        // [신규] 방어 코드: 씬이 없거나, 텍스트 객체가 죽었으면 중단
+        if (!this.scene || !this.text || !this.text.scene) {
+            return;
+        }
         // 타입에 따라 색상과 텍스트 변경
         switch (this.tileType) {
             case 'M': // 몬스터
@@ -76,6 +85,22 @@ export default class Tile extends Phaser.GameObjects.Container {
             case 'EVT':
                 this.bg.setFillStyle(0x4444ff); // 파랑
                 this.text.setText('❓');
+                break;
+            case 'G': // 골드
+                this.bg.setFillStyle(0xffff44); // 노랑
+                this.text.setText('💰');
+                break;
+            case 'H': // 힐링
+                this.bg.setFillStyle(0x44ffff); // 민트
+                this.text.setText('❤️');
+                break;
+            case 'SHOP_G': // 상점 골드
+                this.bg.setFillStyle(0xff44ff); // 핑크
+                this.text.setText('🏪');
+                break;
+            case 'SHOP_D': // 상점 악마
+                this.bg.setFillStyle(0x8844ff); // 보라
+                this.text.setText('😈');
                 break;
             default:  // 꽝/빈땅
                 this.bg.setFillStyle(0x666666);

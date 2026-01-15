@@ -14,6 +14,8 @@ export interface GameSession {
     gridX: number;       // 현재 위치
     gridY: number;
     turnCount: number;   // 진행된 턴 수
+    currentStage: number;
+    totalStages: number;
 }
 
 class DataManager {
@@ -44,7 +46,7 @@ class DataManager {
     }
 
     // --- 핵심 로직: 게임 시작 (Meta -> Session 복사) ---
-    public startNewGame(startX: number, startY: number) {
+    public startNewGame(startX: number, startY: number, maxStages: number = 3) {
         // 메타 데이터의 스탯을 기반으로 세션을 초기화합니다.
         // 여기서 중요한 건 값을 '복사'해서 넣는 것입니다.
         this.session = {
@@ -52,7 +54,9 @@ class DataManager {
             currentAtk: this.meta.baseAtk,
             gridX: startX,
             gridY: startY,
-            turnCount: 0
+            turnCount: 0,
+            currentStage: 1,
+            totalStages: maxStages
         };
         console.log("새 게임 세션 생성됨:", this.session);
     }

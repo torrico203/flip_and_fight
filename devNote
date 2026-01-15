@@ -1,6 +1,15 @@
 // 사업 - 아버지 명의 법인
 // 게임 개발 (웹, 스팀, 모바일), 웹 서비스 (사주팔자, 운세, 타로, 재무 등)
 // 사무직 서바이버
+흐음...ui들 점점 많이지는데 관리하기 좋게 uiManager로해서 처리하면 안되나?
+
+일단 MainScene부터
+
+지금 Scene이 (BattleScene, HammerScnee, MenuScene, PachinkoScene, PineappleScene, ShopScene, SlotMachineScene, StoreScene)
+
+이렇게 많은데...공통으로 쓰는 ui들이 있을거고 할거 아니야?
+
+공통으로 쓸 ui는 뭐 일단 TopUI가 있으니 이것도 ts로 따로 빼고 뭐 이렇게 좀 효율화 좀 추구해야할거 같은데 지금 너무 게임 동작 위주로만 개발한 느낌이야
 
 // 스테이지 확장 관련 구조로 변경 필요...!
 src/

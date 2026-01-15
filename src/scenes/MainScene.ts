@@ -31,6 +31,9 @@ export default class MainScene extends Phaser.Scene {
     private boardStartX: number = 0;
     private boardStartY: number = 0;
 
+    private stageText!: Phaser.GameObjects.Text;
+    private isTransitioning: boolean = false;
+
     constructor() { super('MainScene'); }
 
     init(data: GameData) { this.gridSize = data.gridSize || 5; }
@@ -50,9 +53,13 @@ export default class MainScene extends Phaser.Scene {
         // 플레이어: (0, 4) -> 좌측 하단 (x=0, y=Max)
         const heroSkin = DataManager.meta.heroId;
         this.player = new Character(this, 0, 0, 0x4facfe, '😎');
+
         const session = DataManager.getSession();
         this.player.setGridPosition(session.gridX, session.gridY, this.tileSize, this.tileGap, this.boardStartX, this.boardStartY);
-        
+        this.stageText = this.add.text(this.scale.width - 20, 20, `STAGE ${session.currentStage}/${session.totalStages}`, {
+            fontSize: '24px', color: '#fff', fontStyle: 'bold'
+        }).setOrigin(1, 0).setDepth(100);
+
         // 적: (4, 0) -> 우측 상단 (x=Max, y=0)
         this.enemy = new Character(this, 0, 0, 0xff0057, '👿');
         this.enemy.setGridPosition(this.gridSize - 1, 0, this.tileSize, this.tileGap, this.boardStartX, this.boardStartY);
@@ -64,6 +71,8 @@ export default class MainScene extends Phaser.Scene {
         // 첫 위치 타일 오픈 처리
         this.tiles[this.gridSize-1][0].flip(true); // silent flip
         this.tiles[0][this.gridSize-1].flip(true);
+
+        this.isTransitioning = false; // 시작 초기화
     }
 
     private createBoard() {
@@ -126,11 +135,10 @@ export default class MainScene extends Phaser.Scene {
         // 2. 충돌 체크 (같은 칸으로 이동하려 하는가?)
         if (playerDestX === enemyDestX && playerDestY === enemyDestY) {
             await this.executeClash(playerDestX, playerDestY);
+            this.postMoveCheck();
         } else {
             await this.executeMove(playerDestX, playerDestY, enemyDestX, enemyDestY);
         }
-
-        this.postMoveCheck();
 
         this.isProcessingTurn = false;
     }
@@ -179,6 +187,10 @@ export default class MainScene extends Phaser.Scene {
         }
         else {
              // 일반 아이템/함정 처리는 여기서 즉시 해도 됨
+             if (pTile.tileType === 'I') {
+                 // 예: 아이템 획득 연출
+                 console.log("아이템 획득!"); 
+             }
              this.postMoveCheck();
         }
     }
@@ -308,6 +320,10 @@ export default class MainScene extends Phaser.Scene {
     // [추가] 이동/행동이 다 끝난 후 호출될 함수
     private async postMoveCheck() {
         // 1. 플레이어 생존 체크 (이미 죽었으면 배틀이고 뭐고 끝)
+        if (this.isTransitioning) {
+            return;
+        }
+
         if (DataManager.getSession().currentHp <= 0) {
             this.handleGameOver(false);
             return;
@@ -320,12 +336,18 @@ export default class MainScene extends Phaser.Scene {
         );
 
         if (allRevealed) {
-            console.log("📢 모든 타일 오픈! 최종 결전 시작!");
+            const session = DataManager.getSession();
             
-            // 잠시 텀을 두고 결전 시작 (연출용)
-            this.time.delayedCall(1000, () => {
-                this.startShowdown();
-            });
+            // [핵심 분기] 스테이지가 남았으면 다음 판으로, 아니면 보스전
+            if (session.currentStage < session.totalStages) {
+                console.log("📢 스테이지 클리어! 다음 스테이지로 이동");
+                this.isTransitioning = true;
+                this.transitionToNextStage();
+            } else {
+                console.log("📢 모든 스테이지 클리어! 최종 결전!");
+                this.isTransitioning = true;
+                this.time.delayedCall(1000, () => this.startShowdown());
+            }
         }
     }
 
@@ -354,6 +376,116 @@ export default class MainScene extends Phaser.Scene {
                 this.handleGameOver(result.win);
             }
         });
+    }
+
+    // [신규] 다음 스테이지 전환 연출 (푸다다닥 -> 투쿵 -> 새 배치)
+    private transitionToNextStage() {
+        // 입력 막기
+        this.isProcessingTurn = true;
+
+        // 1. "푸다다닥" 타일 제거 연출
+        // 모든 타일을 순차적으로 작아지게 해서 없앰
+        const allTiles: Tile[] = [];
+        this.tiles.forEach(row => row.forEach(t => allTiles.push(t))); // 평탄화
+
+        this.tweens.killTweensOf(allTiles);
+
+        this.tweens.add({
+            targets: allTiles, // 타일 컨테이너들
+            scaleX: 0,
+            scaleY: 0,
+            alpha: 0,
+            duration: 300,
+            stagger: 30, // 30ms 간격으로 하나씩 "푸다다닥" 사라짐
+            onComplete: () => {
+                this.clearBoardData(); // 데이터 청소
+                this.showStageAnnouncement(); // "투쿵" 연출 시작
+            }
+        });
+
+        // 캐릭터들도 잠시 숨김
+        this.tweens.add({
+            targets: [this.player, this.enemy],
+            alpha: 0,
+            duration: 200
+        });
+    }
+
+    // 보드 데이터 초기화
+    private clearBoardData() {
+        // 기존 타일 객체들 파괴
+        this.tiles.forEach(row => {
+            row.forEach(t => t.destroy());
+        });
+        this.tiles = []; // 배열 비우기
+    }
+
+    // 2. "투쿵" 스테이지 알림 연출
+    private showStageAnnouncement() {
+        const session = DataManager.getSession();
+        session.currentStage++; // 스테이지 증가
+        
+        // UI 업데이트
+        this.stageText.setText(`STAGE ${session.currentStage}/${session.totalStages}`);
+
+        const { width, height } = this.scale;
+
+        // 거대한 텍스트 생성
+        const bigText = this.add.text(width/2, height/2, `STAGE ${session.currentStage}`, {
+            fontSize: '80px', color: '#ffd700', fontStyle: 'bold',
+            stroke: '#000', strokeThickness: 8
+        }).setOrigin(0.5).setScale(3).setAlpha(0); // 엄청 크고 투명하게 시작
+
+        // 쾅! 내려찍는 애니메이션
+        this.tweens.add({
+            targets: bigText,
+            scale: 1,
+            alpha: 1,
+            duration: 500,
+            ease: 'Bounce.out', // 쿵! 하고 튕김
+            onComplete: () => {
+                this.cameras.main.shake(300, 0.02); // 화면 흔들림
+                
+                // 1초 뒤에 텍스트 사라지면서 새 게임 시작
+                this.time.delayedCall(1000, () => {
+                    this.tweens.add({
+                        targets: bigText,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => {
+                            bigText.destroy();
+                            this.startNextRound(); // 새 보드 생성
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    // 3. 새 보드 생성 및 캐릭터 재배치
+    private startNextRound() {
+        // 보드 재생성
+        this.createBoard();
+        
+        const session = DataManager.getSession();
+        
+        // 플레이어/적 위치 초기화 (데이터)
+        // 보통 다음 스테이지에선 플레이어가 (0, max)에서 다시 시작
+        session.gridX = 0;
+        session.gridY = this.gridSize - 1;
+        
+        // 캐릭터 객체 위치 재설정
+        this.player.setGridPosition(0, this.gridSize - 1, this.tileSize, this.tileGap, this.boardStartX, this.boardStartY);
+        this.player.setAlpha(1); // 다시 보이게
+
+        // 적 위치 초기화 (우상단)
+        const ex = this.gridSize - 1;
+        const ey = 0;
+        this.enemy.setGridPosition(ex, ey, this.tileSize, this.tileGap, this.boardStartX, this.boardStartY);
+        this.enemy.setAlpha(1);
+
+        this.isTransitioning = false;
+        this.isProcessingTurn = false; // 입력 잠금 해제
     }
 
     // [신규] 게임 오버/클리어 처리
